@@ -57,7 +57,7 @@ class BatchCOVIDLogisticProphet:
     def fit(self, data):
         self.models = {}
         for group, group_df in data.groupby(self.group_cols):
-            print(f"Trainig Prophet model for {group}.")
+            print(f"Training Prophet model for {group}.")
 
             # Groups are assumed to not be predictors. Make additional predictor columns with the same info if
             # you need to reuse them.
