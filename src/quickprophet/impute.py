@@ -1,0 +1,45 @@
+def fill_missing_dates(df, date_column="ds", value_column="y", group_column=None, fill_value=0):
+    """
+    Fill missing dates between the min and max date within each group
+    and assign the value of 0 for the specified column.
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame.
+    - date_column (str): Name of the datetime column.
+    - value_column (str): Name of the column to fill missing values.
+    - group_column (str): Name of the column representing groupings within the data.
+    Returns:
+    - pd.DataFrame: DataFrame with missing dates filled and values assigned.
+    """
+    # Ensure the date_column is in datetime format
+    df[date_column] = pd.to_datetime(df[date_column])
+
+    # If grouping column is specified, group by it; otherwise, use the entire DataFrame
+    groups = df.groupby(group_column) if group_column else [df]
+
+    # Iterate through groups
+    filled_dfs = []
+    for group_name, group_df in groups:
+        # Get the min and max date within each group
+        min_date = group_df[date_column].min()
+        max_date = group_df[date_column].max()
+
+        # Generate a date range between min and max date
+        date_range = pd.date_range(min_date, max_date, freq="D")
+
+        # Create a DataFrame with the date range
+        date_range_df = pd.DataFrame({date_column: date_range})
+
+        # Merge the original DataFrame with the date range DataFrame, filling missing values with 0
+        filled_df = pd.merge(
+            date_range_df, group_df, on=date_column, how="left"
+        ).fillna({value_column: 0, group_column: group_name})
+
+        filled_dfs.append(filled_df)
+
+    # Concatenate the filled DataFrames
+    result_df = pd.concat(filled_dfs, ignore_index=True)
+
+    # Fill remaining NaN values in the value column
+    result_df[value_column] = result_df[value_column].fillna(fill_value)
+
+    return result_df
