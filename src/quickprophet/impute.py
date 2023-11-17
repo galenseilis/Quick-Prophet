@@ -39,7 +39,10 @@ def fill_missing_dates(
         # Merge the original DataFrame with the date range DataFrame, filling missing values with 0
         filled_df = pd.merge(
             date_range_df, group_df, on=date_column, how="left"
-        ).fillna({value_column: 0, group_column: group_name})
+        ).fillna({value_column: fill_value})
+
+        # Fill missing values in the group_column
+        filled_df[group_column] = filled_df[group_column].fillna(group_name)
 
         filled_dfs.append(filled_df)
 
