@@ -6,10 +6,17 @@ def add_weekday_features(df: pd.DataFrame, dtcol=None) -> pd.DataFrame:
     If dtcol is not provided then it will be assumed
     that the index is a datetime index.
 
+    PARAMETERS
+    ----------
     df: pd.DataFrame
         Dataframe with datetime.
     dtcol: str
         The datetime column
+
+    RETURNS
+    -------
+    df: pd.DataFrame
+        Dataframe with weekday one-hot variables.
     """
     if dtcol is None:
         df["weekday"] = df.index.day_name()
