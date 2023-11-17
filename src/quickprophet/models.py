@@ -1,3 +1,5 @@
+import pandas as pd
+
 class BatchCOVIDLogisticProphet:
     def __init__(self, group_cols, floor=0, cap=7.5 * 60 / 8, datalag=26):
         '''
