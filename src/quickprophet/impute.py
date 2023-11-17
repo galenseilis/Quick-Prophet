@@ -23,12 +23,13 @@ def fill_missing_dates(
     # If grouping column is specified, group by it; otherwise, use the entire DataFrame
     groups = data.groupby(group_column) if group_column else [data]
 
+    # Get the min and max date within each group
+    min_date = data[date_column].min()
+    max_date = data[date_column].max()
+
     # Iterate through groups
     filled_dfs = []
     for group_name, group_df in groups:
-        # Get the min and max date within each group
-        min_date = group_df[date_column].min()
-        max_date = group_df[date_column].max()
 
         # Generate a date range between min and max date
         date_range = pd.date_range(min_date, max_date, freq="D")
@@ -42,7 +43,7 @@ def fill_missing_dates(
         ).fillna({value_column: fill_value})
 
         # Fill missing values in the group_column
-        filled_df[group_column] = filled_df[group_column].fillna(group_name)
+        filled_df[group_column] = filled_df.apply(lambda row: group_name if pd.isnull(row[group_column]) else row[group_column], axis=1)
 
         filled_dfs.append(filled_df)
 

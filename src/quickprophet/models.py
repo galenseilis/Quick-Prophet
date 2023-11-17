@@ -6,6 +6,8 @@ import pandas as pd
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
 
+import features
+
 class BatchCOVIDLogisticProphet:
     def __init__(self, group_cols, floor=0, cap=7.5 * 60 / 8, datalag=26):
         '''
@@ -107,7 +109,7 @@ class BatchCOVIDLogisticProphet:
         for group in self.models:
             print(f"Forecasting group {group}")
             future = self.models[group].make_future_dataframe(periods=periods)
-            future = add_weekday_features(future, "ds")
+            future = features.add_weekday_features(future, "ds")
             future["floor"] = self.floor
             future["cap"] = self.cap
 
