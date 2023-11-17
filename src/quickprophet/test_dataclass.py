@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 import impute
+import models
 
 @dataclass(order=True, frozen=True)
 class InventoryItem:
@@ -13,7 +14,7 @@ class InventoryItem:
     quantity_on_hand: int = 0
 
 
-dates = pd.date_range('2018-11-23', '2018-12-01')
+dates = pd.date_range('2018-11-23', '2018-11-25')
 
 d = {'ds':dates,
      'y':np.random.random(size=dates.size),
@@ -21,3 +22,8 @@ d = {'ds':dates,
      }
 
 df = pd.DataFrame(d)
+df = impute.fill_missing_dates(df, group_column='forecast_group')
+
+result = models.BatchCOVIDLogisticProphet(['forecast_group']).fit(df).predict(10)
+
+print(result)

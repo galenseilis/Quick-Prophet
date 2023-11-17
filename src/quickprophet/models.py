@@ -6,7 +6,10 @@ import pandas as pd
 from prophet import Prophet
 from prophet.diagnostics import cross_validation
 
-from . import features
+try:
+    from . import features
+except ImportError:
+    import features
 
 class BatchCOVIDLogisticProphet:
     def __init__(self, group_cols, floor=0, cap=7.5 * 60 / 8, datalag=26):
@@ -67,7 +70,7 @@ class BatchCOVIDLogisticProphet:
     def fit(self, data):
         self.models = {}
         for group, group_df in data.groupby(self.group_cols):
-            print(f"Trainig Prophet model for {group}.")
+            print(f"Training Prophet model for {group}.")
 
             # Groups are assumed to not be predictors. Make additional predictor columns with the same info if
             # you need to reuse them.
@@ -115,7 +118,7 @@ class BatchCOVIDLogisticProphet:
 
             forecast = self.models[group].predict(future)
 
-            forecast["groups"] = tuple(group) * forecast.shape[0]
+            forecast["groups"] = (group,) * forecast.shape[0]
 
             if forecasts is None:
                 forecasts = forecast
