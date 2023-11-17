@@ -4,23 +4,17 @@
 import pandas as pd
 from prophet import Prophet
 
-class EqByEqCOVIDLogisticProphet:
-    """Model class that runs a COVID-19-aware logist Prophet model.
-
-    Procedes equation-by-equation.
-    """
-
+class BatchCOVIDLogisticProphet:
     def __init__(self, group_cols, floor=0, cap=7.5 * 60 / 8, datalag=26):
-        """
+        '''
         datalag (int): Most recent number of weeks to treat as special dates.
-        """
+        '''
 
         if not (isinstance(group_cols, list) and len(group_cols) >= 1):
             raise ValueError(
                 "Must specify a list containing at least one column name to group by."
             )
 
-        self.models = {}
         self.group_cols = group_cols
         self.floor = floor
         self.cap = cap
@@ -62,28 +56,16 @@ class EqByEqCOVIDLogisticProphet:
             ).dt.days
 
             self.holidays = pd.concat((self.covid_block, self.data_lag_block))
-
+        
         else:
             self.holidays = self.covid_block
 
     def fit(self, data):
-        '''Fit model to training data.
-
-        PARAMETERS
-        ----------
-        data: pd.DataFrame
-            Training data
-
-        RETURNS
-        -------
-        self
-        '''
         self.models = {}
         for group, group_df in data.groupby(self.group_cols):
-            print(f"Training Prophet model for {group}.")
+            print(f"Trainig Prophet model for {group}.")
 
-            # Groups are assumed to not be predictors.
-            # Make additional predictor columns with the same info if
+            # Groups are assumed to not be predictors. Make additional predictor columns with the same info if
             # you need to reuse them.
             group_df.drop(columns=self.group_cols, inplace=True)
 
@@ -103,4 +85,59 @@ class EqByEqCOVIDLogisticProphet:
             # Train
             self.models[group].fit(group_df)
 
+        return self
+
+    def predict(self, periods=365 * 10, nonneg=True, noholiday=True):
+        """Predict a given number of periods into the future.
+
+        Args:
+        periods (int): Number of periods to forecast into the future.
+        nonneg (bool): Whether to truncate negative values to zero. (default=True)
+        noholiday (bool): Whether to subtract holiday effects from forecast.
+
+        Returns:
+        forecasts (pd.DataFrame): Forecast for each facility.
+        """
+
+        forecasts = None
+
+        # Prepare future inputs
+        for group in self.models:
+            print(f"Forecasting group {group}")
+            future = self.models[group].make_future_dataframe(periods=periods)
+            future = add_weekday_features(future, "ds")
+            future["floor"] = self.floor
+            future["cap"] = self.cap
+
+            forecast = self.models[group].predict(future)
+
+            forecast["groups"] = tuple(group) * forecast.shape[0]
+
+            if forecasts is None:
+                forecasts = forecast
+            else:
+                forecasts = pd.concat((forecasts, forecast))
+
+        forecasts.columns = (
+            forecasts.columns.str.replace("'", "")
+            .str.replace(" ", "_")
+            .str.replace("(", "")
+            .str.replace(")", "")
+            .str.upper()
+        )
+
+        if noholiday:
+            forecasts["YHAT_LOWER"] = forecasts["YHAT_LOWER"] - forecasts["HOLIDAYS_LOWER"]
+            forecasts["YHAT"] = forecasts["YHAT"] - forecasts["HOLIDAYS"]
+            forecasts["YHAT_UPPER"] = forecasts["YHAT_UPPER"] - forecasts["HOLIDAYS_UPPER"]
+
+        if nonneg:
+            for col in ["YHAT_LOWER", "YHAT", "YHAT_UPPER"]:
+                forecasts[col] = forecasts[col].apply(lambda x: max(x, 0))
+
+        return forecasts
+
+    def cv(self):
+        """Cross validate."""
+        raise NotImplementedError
         return self
