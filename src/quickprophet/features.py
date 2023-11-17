@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def add_weekday_features(df: pd.DataFrame, dtcol=None) -> pd.DataFrame:
     """Add day of week dummies.
 

@@ -1,9 +1,16 @@
-def fill_missing_dates(df, date_column="ds", value_column="y", group_column=None, fill_value=0):
+'''Functions for imputing data in timeseries.'''
+
+
+import pandas as pd
+
+def fill_missing_dates(
+    data, date_column="ds", value_column="y", group_column=None, fill_value=0
+):
     """
     Fill missing dates between the min and max date within each group
     and assign the value of 0 for the specified column.
     Parameters:
-    - df (pd.DataFrame): Input DataFrame.
+    - data (pd.DataFrame): Input DataFrame.
     - date_column (str): Name of the datetime column.
     - value_column (str): Name of the column to fill missing values.
     - group_column (str): Name of the column representing groupings within the data.
@@ -11,10 +18,10 @@ def fill_missing_dates(df, date_column="ds", value_column="y", group_column=None
     - pd.DataFrame: DataFrame with missing dates filled and values assigned.
     """
     # Ensure the date_column is in datetime format
-    df[date_column] = pd.to_datetime(df[date_column])
+    data[date_column] = pd.to_datetime(data[date_column])
 
     # If grouping column is specified, group by it; otherwise, use the entire DataFrame
-    groups = df.groupby(group_column) if group_column else [df]
+    groups = data.groupby(group_column) if group_column else [data]
 
     # Iterate through groups
     filled_dfs = []

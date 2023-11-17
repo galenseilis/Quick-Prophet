@@ -1,16 +1,26 @@
-import pandas as pd
+"""Model classes based on Facebook's Prophet."""
 
-class BatchCOVIDLogisticProphet:
+
+import pandas as pd
+from prophet import Prophet
+
+class EqByEqCOVIDLogisticProphet:
+    """Model class that runs a COVID-19-aware logist Prophet model.
+
+    Procedes equation-by-equation.
+    """
+
     def __init__(self, group_cols, floor=0, cap=7.5 * 60 / 8, datalag=26):
-        '''
+        """
         datalag (int): Most recent number of weeks to treat as special dates.
-        '''
+        """
 
         if not (isinstance(group_cols, list) and len(group_cols) >= 1):
             raise ValueError(
                 "Must specify a list containing at least one column name to group by."
             )
 
+        self.models = {}
         self.group_cols = group_cols
         self.floor = floor
         self.cap = cap
@@ -52,16 +62,28 @@ class BatchCOVIDLogisticProphet:
             ).dt.days
 
             self.holidays = pd.concat((self.covid_block, self.data_lag_block))
-        
+
         else:
             self.holidays = self.covid_block
 
     def fit(self, data):
+        '''Fit model to training data.
+
+        PARAMETERS
+        ----------
+        data: pd.DataFrame
+            Training data
+
+        RETURNS
+        -------
+        self
+        '''
         self.models = {}
         for group, group_df in data.groupby(self.group_cols):
             print(f"Training Prophet model for {group}.")
 
-            # Groups are assumed to not be predictors. Make additional predictor columns with the same info if
+            # Groups are assumed to not be predictors.
+            # Make additional predictor columns with the same info if
             # you need to reuse them.
             group_df.drop(columns=self.group_cols, inplace=True)
 
