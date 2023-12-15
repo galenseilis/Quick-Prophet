@@ -94,7 +94,7 @@ class BatchCOVIDLogisticProphet:
 
         return self
 
-    def predict(self, periods=365 * 10, nonneg=True, noholiday=True):
+    def predict(self, periods=365 * 10, weekday=True, dayofyear=True, nonneg=True, noholiday=True):#TODO: Pass in a "future prep" function for preparing features
         """Predict a given number of periods into the future.
 
         Args:
@@ -112,7 +112,12 @@ class BatchCOVIDLogisticProphet:
         for group in self.models:
             print(f"Forecasting group {group}")
             future = self.models[group].make_future_dataframe(periods=periods)
-            future = features.add_weekday_features(future, "ds")
+            if weekday:
+                future = features.add_weekday_features(future, "ds")
+
+            if dayofyear:
+                future = features.add_day_of_year_features(future, "ds")
+                
             future["floor"] = self.floor
             future["cap"] = self.cap
 
@@ -172,3 +177,18 @@ class BatchCOVIDLogisticProphet:
         print(tuning_results)
 
         return self
+
+
+import numpy as np
+ds = pd.date_range('2023-01-01', '2024-01-01')
+df = pd.DataFrame(
+    dict(
+        ds=ds,
+        y=np.random.poisson(1,size=ds.size)
+        )
+    )
+df = features.add_day_of_year_features(df, 'ds')
+
+df['GROUPS'] = ['ALL'] * df.shape[0]
+model = BatchCOVIDLogisticProphet(group_cols=['GROUPS'])
+model.fit(df)

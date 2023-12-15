@@ -29,14 +29,6 @@ def add_weekday_features(df: pd.DataFrame, dtcol=None) -> pd.DataFrame:
     return df
 
 
-ds = pd.date_range('2023-01-01', '2024-01-01')
-df = pd.DataFrame(
-    dict(
-        ds=ds,
-        y=np.random.poisson(1,size=ds.size)
-        )
-    )
-
 def add_day_of_year_features(df, dtcol):
     """
     Add day-of-year features to a DataFrame based on a datetime column.
